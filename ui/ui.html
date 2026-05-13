@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IMS Mobile - All-in-One</title>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -31,7 +33,6 @@
             --accent-red: #e74c3c;
             --text-reports-sub: #707070;
         }
-
         body {
             background-color: #1a1a1a;
             margin: 0;
@@ -49,14 +50,20 @@
 .phone {
     width: 375px;
     height: 812px;
+    /* Use 90vh to make sure it fits on YOUR computer screen */
     max-height: 90vh; 
+    margin: 20px auto; 
+    
     display: flex;
     flex-direction: column;
     background-color: #004d4d;
     border-radius: 40px;
-    overflow: hidden; /* This keeps the rounding visible */
     position: relative;
-    margin: 20px auto;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    
+    /* Center it if the screen is too small */
+    align-self: center;
 }
 
 .header-section {

@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMS Mobile - All-in-One</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary-dark: #004d4d;
+            --primary-btn: #004545;
+            --bg-light: #f1f3f6;
+            --white: #ffffff;
+            --success: #2ecc71;
+            --warning: #f1c40f;
+            --danger: #e74c3c;
+            --text-main: #000000;
+            --text-sub: #a0a0a0;
+            --input-bg: #f1f3f6;
+            --text-label: #707070;
+            --text-placeholder: #a0a8b3;
+            /* Profile & History Specific */
+            --primary-teal: #004d4d;
+            --danger-red: #e53e3e;
+            --card-bg: #e2e8f0;
+            --in-green: #2ecc71;
+            --out-red: #e74c3c;
+            /* Reports specific colors */
+            --accent-green: #004d4d;
+            --accent-orange: #f39c12;
+            --accent-red: #e74c3c;
+            --text-reports-sub: #707070;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+ * {
+    box-sizing: border-box; /* Crucial for layout math */
+}
+
+.phone {
+    width: 375px;
+    height: 812px;
+    max-height: 90vh; 
+    display: flex;
+    flex-direction: column;
+    background-color: #004d4d;
+    border-radius: 40px;
+    overflow: hidden; /* This keeps the rounding visible */
+    position: relative;
+    margin: 20px auto;
+}
+
+.header-section {
+    padding: 50px 20px 20px 20px; /* Increased top padding to 50px */
+    background-color: #004d4d;
+    color: white;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.header-section h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+    /* Ensure the text doesn't hit the very top */
+    padding-top: 10px; 
+}
+
+.search-container {
+    margin-top: 15px;
+    width: 100%;
+}
+.view-content {
+    flex: 1; /* This forces the white area to grow and fill all available space */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; 
+    background: #f4f7f6; /* Matching the light grey/white in your image */
+}
+
+        /* --- SCREEN TRANSITIONS --- */
+        #login-trigger { display: none; }
+        
+        .login-screen {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--primary-dark);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+        }
+
+        #login-trigger:checked ~ .login-screen {
+            transform: translateY(-100%);
+        }
+
+        /* --- LOGIN STYLES --- */
+        .header-section { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--white); padding: 20px; }
+        .logo-container { width: 90px; height: 70px; margin-bottom: 10px; }
+        .login-card { background-color: var(--white); border-top-left-radius: 40px; border-top-right-radius: 40px; padding: 30px 25px; flex: 1.8; display: flex; flex-direction: column; }
+        .toggle-container { background-color: #f1f3f6; border-radius: 30px; display: flex; position: relative; padding: 5px; margin-bottom: 25px; }
+        .toggle-label { flex: 1; padding: 10px; text-align: center; font-weight: 700; font-size: 13px; cursor: pointer; z-index: 1; }
+        .toggle-bg { position: absolute; width: calc(50% - 5px); height: calc(100% - 10px); background: var(--primary-dark); border-radius: 25px; transition: 0.3s ease; }
+        #staff-radio:checked ~ .toggle-container .toggle-bg { transform: translateX(100%); }
+        #staff-radio:checked ~ .toggle-container label[for="staff-radio"] { color: white; }
+        #admin-radio:checked ~ .toggle-container label[for="admin-radio"] { color: white; }
+        input[type="radio"] { display: none; }
+        .login-btn { background-color: var(--primary-btn); color: white; padding: 16px; border-radius: 12px; font-size: 15px; font-weight: 700; text-align: center; cursor: pointer; margin-top: auto; }
+
+        /* --- INTERNAL NAVIGATION LOGIC --- */
+        .view-content { height: calc(100% - 95px); width: 100%; position: relative; background: var(--bg-light); }
+        .screen-view { display: none; height: 100%; width: 100%; flex-direction: column; overflow: hidden; }
+        .screen-view.active { display: flex; }
+
+        /* --- SHARED HEADER --- */
+        .dash-header, .header-add, .reports-header, .history-header { background-color: var(--primary-dark); padding: 65px 25px 30px; color: white; }
+        .dash-header h2, .reports-header h2, .history-header h2 { font-size: 26px; margin: 0 0 20px 0; font-weight: 800; }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 25px 20px; padding-bottom: 40px; }
+
+        /* --- DASHBOARD STYLES --- */
+        .search-container { background: white; border-radius: 12px; display: flex; align-items: center; padding: 12px 15px; }
+        .search-container input { width: 100%; border: none; outline: none; font-size: 16px; color: #333; margin-left: 10px; }
+        .item-card { background: var(--white); padding: 22px 20px; border-radius: 28px; display: block; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.04); margin-bottom: 15px;}
+        .card-main-content { display: flex; align-items: center; }
+        .item-icon { width: 45px; margin-right: 18px; color: #333; display: flex; justify-content: center; }
+        .item-details { flex: 1; }
+        .item-details strong { display: block; font-size: 19px; font-weight: 700; color: var(--text-main); }
+        .item-stock { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 16px; }
+        .status-dot { width: 11px; height: 11px; border-radius: 50%; }
+
+        /* --- HISTORY / MOVEMENT STYLES --- */
+        .movement-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px; display: flex; align-items: center; gap: 15px; }
+        .indicator { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+        .indicator.in { background: #eafaf1; color: var(--in-green); }
+        .indicator.out { background: #fdf2f2; color: var(--out-red); }
+        .info { flex: 1; }
+        .info b { font-size: 14px; display: block; }
+        .info small { color: var(--text-label); font-size: 11px; }
+        .qty-change { font-weight: 800; font-size: 15px; }
+
+        /* --- PROFILE VIEW SPECIFIC --- */
+        .header-profile { background-color: var(--primary-teal); height: 200px; position: relative; padding: 55px 25px; color: white; }
+        .back-btn-profile { display: flex; align-items: center; gap: 8px; font-size: 18px; color: white; font-weight: 500; cursor: pointer; }
+        .avatar-container { position: absolute; bottom: -55px; left: 50%; transform: translateX(-50%); width: 115px; height: 115px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 2; cursor: pointer; transition: transform 0.2s; }
+        .avatar-container:active { transform: translateX(-50%) scale(0.95); }
+        .avatar-circle { width: 95px; height: 95px; background: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; }
+        .user-info { margin-top: 60px; text-align: center; padding: 0 20px; }
+        .user-info h2 { font-size: 22px; margin: 0; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .user-info .email { font-size: 14px; color: var(--text-sub); margin: 4px 0 2px; }
+        .user-info .role { font-size: 14px; color: var(--text-sub); margin: 0; }
+        .menu-container { flex: 1; padding: 20px; overflow-y: auto; padding-bottom: 100px; }
+        .menu-card { background-color: var(--card-bg); border-radius: 12px; display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
+        .menu-card:active { background-color: #cbd5e0; }
+        .menu-card span { font-weight: 600; color: #333; font-size: 15px; }
+        .logout-text { color: var(--danger-red) !important; }
+        .edit-hint { font-size: 10px; color: var(--primary-teal); margin-top: 8px; font-weight: 700; opacity: 0.6; }
+
+        /* --- ADD NEW PRODUCT STYLES --- */
+        .back-btn { display: flex; align-items: center; gap: 8px; font-size: 16px; cursor: pointer; margin-bottom: 25px; color: white; }
+        .form-container { flex: 1; padding: 30px 25px; overflow-y: auto; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 13px; font-weight: 700; color: var(--text-label); margin-bottom: 6px; }
+        .input-group input, .input-group select { width: 100%; padding: 14px; background-color: var(--input-bg); border-radius: 12px; border: none; box-sizing: border-box; }
+        .image-upload { border: 2px dashed #d0d7de; border-radius: 16px; padding: 20px; text-align: center; color: var(--text-placeholder); margin-bottom: 25px; cursor: pointer; }
+        .save-btn { background-color: var(--primary-dark); color: white; width: 100%; padding: 18px; border: none; border-radius: 30px; font-size: 18px; font-weight: 700; cursor: pointer; }
+
+        /* --- REPORTS LOGIC --- */
+        .logic-check { display: none; }
+        #bar-supplies:checked ~ .view-content .bar-supplies { background: var(--accent-orange); transform: scaleX(1.1); }
+        #bar-supplies:checked ~ .view-content .supplies-info { display: block; }
+        #low-stock-check:checked ~ .view-content .low-stock-card { border: 2px solid var(--accent-red); background: #fff5f5; }
+        #low-stock-check:checked ~ .view-content .alert-box { display: block; }
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); background: white; padding: 25px 10px; border-radius: 25px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .stat-item { text-align: center; border-right: 1px solid #eee; cursor: pointer; transition: 0.3s; }
+        .stat-item:last-child { border-right: none; }
+        .stat-item span { font-size: 10px; font-weight: 800; color: #333; text-transform: uppercase; display: block; margin-bottom: 10px; }
+        .stat-item h3 { margin: 0; font-size: 22px; font-weight: 700; }
+        .stat-total { color: var(--primary-dark); }
+        .stat-low { color: var(--accent-red); }
+        .alert-box { display: none; background: var(--accent-red); color: white; padding: 15px; border-radius: 15px; margin-bottom: 20px; font-size: 13px; animation: shake 0.5s ease-in-out; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .chart-card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 15px; position: relative; }
+        .chart-card h4 { margin: 0 0 15px; font-size: 14px; color: #333; font-weight: 700; }
+        .bar-container { display: flex; align-items: flex-end; justify-content: space-around; height: 140px; padding-bottom: 25px; border-bottom: 1px solid #ccc; }
+        .bar { width: 40px; background: var(--primary-dark); border-radius: 2px; position: relative; cursor: pointer; transition: 0.3s; }
+        .bar-name { position: absolute; bottom: -25px; width: 100%; text-align: center; font-size: 10px; font-weight: 700; color: #555; }
+        .info-panel { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ddd; font-size: 12px; color: var(--text-reports-sub); animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .pie-layout { display: flex; align-items: center; padding: 10px 0; }
+        .pie-visual { width: 110px; height: 110px; border-radius: 50%; background: conic-gradient(var(--accent-green) 0% 68%, var(--accent-orange) 68% 97%, var(--accent-red) 97% 100%); margin-right: 20px; transition: transform 0.5s ease; cursor: pointer; }
+        .pie-visual:active { transform: rotate(180deg) scale(1.1); }
+        .legend { flex: 1; font-size: 11px; line-height: 1.8; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+.bottom-nav {
+    width: 100%;
+    height: 80px;
+    background: white;
+    display: flex;
+    justify-content: space-evenly; /* Better distribution than 'around' */
+    align-items: center;
+    padding-bottom: 15px; /* Lifts icons slightly for better touch ergonomics */
+    border-top: 1px solid #f0f0f0;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px; /* Ensures enough space for the label */
+    color: #666;
+}
+
+.nav-item span {
+    font-size: 10px; /* Standard mobile label size */
+    margin-top: 4px;
+    font-weight: 500;
+}
+#view-history {
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    height: 100%;
+}
+
+#view-history.active {
+    display: flex;
+}
+
+.scroll-area {
+    flex: 1;
+    overflow-y: auto; /* Allows the history cards to scroll */
+    padding: 20px;
+}
+        .photo-upload {
+        border: 2px dashed #d1d5db;
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        color: #a0a8b3;
+        margin-bottom: 20px;
+        background: white;
+    }
+
+    .photo-upload i {
+        display: block;
+        margin: 0 auto 10px;
+    }
+
+    /* Ensuring inputs have the light gray background seen in the reference pics */
+    .input-group input, .input-group select {
+        width: 100%;
+        padding: 16px;
+        background-color: var(--input-bg);
+        border-radius: 15px;
+        border: none;
+        outline: none;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+    </style>
+</head>
+<body>
+
+<div class="phone">
+    <input type="checkbox" id="login-trigger">
+    <input type="checkbox" id="low-stock-check" class="logic-check">
+    <input type="radio" name="bar" id="bar-supplies" class="logic-check">
+    <input type="radio" name="bar" id="bar-none" class="logic-check" checked>
+    
+    <!-- LOGIN SCREEN -->
+    <div class="login-screen">
+        <div class="header-section">
+            <h2 style="font-size: 20px; margin-bottom: 15px;">Inventory Management System</h2>
+            <div class="logo-container">
+                <svg viewBox="0 0 100 80" fill="none" stroke="white" stroke-width="2">
+                    <g><path d="M50 5 L70 15 L50 25 L30 15 Z"/><path d="M30 15 V35 L50 45 V25"/><path d="M70 15 V35 L50 45"/></g>
+                    <g><path d="M30 35 L50 45 L30 55 L10 45 Z"/><path d="M10 45 V65 L30 75 V55"/><path d="M50 45 V65 L30 75"/></g>
+                    <g><path d="M70 35 L90 45 L70 55 L50 45 Z"/><path d="M50 45 V65 L70 75 V55"/><path d="M90 45 V65 L70 75"/></g>
+                </svg>
+            </div>
+            <h3>Secure Login</h3>
+        </div>
+        <div class="login-card">
+            <input type="radio" name="role" id="admin-radio" checked>
+            <input type="radio" name="role" id="staff-radio">
+            <div class="toggle-container">
+                <div class="toggle-bg"></div>
+                <label for="admin-radio" class="toggle-label">Admin</label>
+                <label for="staff-radio" class="toggle-label">Staff</label>
+            </div>
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" placeholder="Username">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" placeholder="Password">
+            </div>
+            <label for="login-trigger" class="login-btn">Login</label>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTENT -->
+    <div class="view-content">
+        <!-- DASHBOARD VIEW -->
+        <div id="view-home" class="screen-view active">
+            <div class="dash-header">
+                <h2>Product List</h2>
+                <div class="search-container">
+                    <i data-lucide="search" size="18" color="#333"></i>
+                    <input type="text" id="productSearch" placeholder="Search products..." onkeyup="filterProducts()">
+                </div>
+            </div>
+            <div class="scroll-area">
+                <div class="item-card">
+                    <div class="card-main-content">
+                        <div class="item-icon"><i data-lucide="rocking-chair"></i></div>
+                        <div class="item-details"><strong>Office Chair</strong><small>Furniture</small></div>
+                        <div class="item-stock">Qty: 15 <div class="status-dot" style="background: var(--success)"></div></div>
+                    </div>
+                </div>
+                <div class="item-card">
+                    <div class="card-main-content">
+                        <div class="item-icon"><i data-lucide="keyboard"></i></div>
+                        <div class="item-details"><strong>Keyboard</strong><small>Electronics</small></div>
+                        <div class="item-stock">Qty: 10 <div class="status-dot" style="background: var(--warning)"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADD PRODUCT VIEW -->
+<div id="view-add" class="screen-view">
+    <div class="header-add">
+        <div class="back-btn" onclick="showView('home')" style="cursor:pointer; display:flex; align-items:center; gap:5px;">
+            <i data-lucide="arrow-left" size="20"></i> Back
+        </div>
+        <h2 style="margin-top:10px">Add New Product</h2>
+    </div>
+    <div class="form-container">
+        <div class="input-group">
+            <label>Product Name</label>
+            <input type="text" id="prod-name" placeholder="e.g. Wireless Mouse">
+        </div>
+        <div class="input-group">
+            <label>Category</label>
+            <select id="prod-cat">
+                <option disabled selected>Select Category...</option>
+                <option>Electronics</option>
+                <option>Furniture</option>
+                <option>Office Supplies</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Initial Stock</label>
+            <input type="number" id="prod-qty" placeholder="Enter quantity">
+        </div>
+        
+        <!-- NEW FIELDS FROM image_1eec74.png -->
+        <div class="input-group">
+            <label>Price</label>
+            <input type="number" id="prod-price" placeholder="Enter unit price">
+        </div>
+        <div class="input-group">
+            <label>Supplier</label>
+            <input type="text" id="prod-supplier" placeholder="e.g. TechHub PH">
+        </div>
+
+        <!-- STYLED PHOTO BOX -->
+        <div class="photo-upload">
+            <i data-lucide="camera" size="32"></i>
+            <span>Add Product Photo</span>
+        </div>
+
+        <button class="save-btn" onclick="saveProduct()">Save Product</button>
+    </div>
+</div>
+
+<script>
+    // Updated save logic to include new fields
+    window.saveProduct = function() {
+        const nameInput = document.getElementById('prod-name');
+        const catInput = document.getElementById('prod-cat');
+        const qtyInput = document.getElementById('prod-qty');
+        const priceInput = document.getElementById('prod-price');
+        const supplierInput = document.getElementById('prod-supplier');
+
+        if(nameInput.value && catInput.value !== "Select Category...") {
+            const newProd = {
+                id: Date.now(),
+                name: nameInput.value,
+                category: catInput.value,
+                qty: parseInt(qtyInput.value) || 0,
+                price: parseFloat(priceInput.value) || 0,
+                supplier: supplierInput.value || "N/A",
+                icon: "package"
+            };
+            products.push(newProd);
+            
+            // Reset form
+            [nameInput, qtyInput, priceInput, supplierInput].forEach(i => i.value = '');
+            catInput.selectedIndex = 0;
+            
+            showView('home');
+        } else {
+            alert("Please fill in the required fields.");
+        }
+    }
+</script>
+        <!-- STOCK MOVEMENT (HISTORY) VIEW -->
+        <div id="view-history" class="screen-view">
+            <div class="history-header">
+                <h2>Stock Movement</h2>
+                <div class="search-container">
+                    <i data-lucide="search" size="18" color="#333"></i>
+                  <input type="text" id="historySearch" placeholder="Search history..." onkeyup="filterHistory()">
+                </div>
+            </div>
+            <div class="scroll-area">
+                <div style="font-size: 12px; font-weight: 800; color: #888; margin-bottom: 15px; text-transform: uppercase;">Recent History</div>
+                
+            <!-- REPLACE THE OLD STATIC CARDS WITH THIS CONTAINER -->
+        <div id="history-list-container"></div>
+    </div>
+</div>
+
+        <!-- REPORTS VIEW -->
+<div id="view-reports" class="screen-view">
+    <div class="reports-header">
+        <h2 style="margin:0">Inventory Reports</h2>
+    </div>
+    <div class="scroll-area">
+        <div class="stats-row">
+            <div class="stat-item"><span>Total Items</span><h3 id="report-total-items" class="stat-total">0</h3></div>
+            <label for="low-stock-check" class="stat-item low-stock-card">
+                <span>Low Stock</span><h3 id="report-low-stock" class="stat-low">0</h3>
+            </label>
+            <div class="stat-item"><span>Total Value</span><h3 id="report-total-value" class="stat-total">$0</h3></div>
+        </div>
+
+        <div class="alert-box"></div>
+
+        <div class="chart-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h4 style="margin:0;">Stock Level by Category</h4>
+                <span style="font-size: 10px; color: var(--primary-dark); font-weight: 800;">Overview</span>
+            </div>
+            <div class="bar-container" id="bar-chart-container">
+                <!-- Bars will be generated here by JavaScript -->
+            </div>
+        </div>
+        
+           <div class="chart-card">
+    <h4>Stock Status Overview</h4>
+    <div class="pie-layout" style="display: flex; align-items: center; gap: 20px;">
+        <div class="pie-visual" id="pie-chart-visual" style="width: 100px; height: 100px; border-radius: 50%;"></div>
+        <div class="legend" id="pie-legend" style="display: flex; flex-direction: column; gap: 8px;">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+        <!-- PROFILE VIEW -->
+        <div id="view-user" class="screen-view" style="background: var(--white);">
+            <div class="header-profile">
+                <div class="back-btn-profile" onclick="showView('home')">
+                    <i data-lucide="arrow-left" size="24"></i> Back
+                </div>
+                <div class="avatar-container">
+                    <div class="avatar-circle">
+                        <i data-lucide="user" size="55"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="user-info">
+                <h2>Admin User</h2>
+                <p class="email">admin@futuretech.com</p>
+                <p class="role">Role: System Administrator</p>
+                <div class="edit-hint">TAP AVATAR TO EDIT</div>
+            </div>
+            <div class="menu-container">
+                <div class="menu-card"><span>Account Settings</span><i data-lucide="chevron-right" size="18"></i></div>
+                <div class="menu-card"><span>Change Password</span><i data-lucide="chevron-right" size="18"></i></div>
+                <div class="menu-card"><span>Notification Preferences</span><i data-lucide="chevron-right" size="18"></i></div>
+                <div class="menu-card" onclick="location.reload()">
+                    <span class="logout-text">[Logout]</span>
+                    <i data-lucide="chevron-right" size="18"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" id="nav-home" onclick="showView('home')">
+            <i data-lucide="home"></i>Home
+        </div>
+        <div class="nav-item" id="nav-add" onclick="showView('add')">
+            <i data-lucide="plus-circle"></i>Add
+        </div>
+        <div class="nav-item" id="nav-history" onclick="showView('history')">
+            <i data-lucide="history"></i>History
+        </div>
+        <div class="nav-item" id="nav-reports" onclick="showView('reports')">
+            <i data-lucide="bar-chart-2"></i>Reports
+        </div>
+        <div class="nav-item" id="nav-user" onclick="showView('user')">
+            <i data-lucide="user"></i>Profile
+        </div>
+    </nav>
+</div>
+
+<!-- Replace the existing <script> and update the Dashboard/Add View sections with this logic -->
+
+<script>
+    // 1. DATA STATE
+    let expandedProductId = null;
+    let products = [
+    { 
+        id: 1, 
+        name: "Office Chair", 
+        category: "Furniture", // Not 'cat'
+        qty: 15, 
+        price: 1200, 
+        supplier: "USPF Logistics", // Not 'supp'
+        icon: "rocking-chair" 
+    },
+    { 
+        id: 2, 
+        name: "Keyboard", 
+        category: "Electronics", 
+        qty: 3, 
+        price: 850, 
+        supplier: "Cebu Tech", 
+        icon: "keyboard" 
+    }
+];
+
+    let history = [
+        { name: "Logitech G305", type: "in", qty: 15, time: "Today, 10:30 AM" },
+        { name: "Dell Monitor 24\"", type: "out", qty: 2, time: "Today, 09:15 AM" }
+    ];
+
+    // 2. RENDER DASHBOARD
+function renderDashboard(data = products) {
+    const container = document.querySelector('#view-home .scroll-area');
+    if (!container) return;
+
+    container.innerHTML = data.map(p => {
+        const isExpanded = expandedProductId === p.id;
+        
+        // Dynamic status colors based on quantity
+        let dotColor = 'var(--success)';
+        if (p.qty <= 5) dotColor = 'var(--danger)';
+        else if (p.qty <= 10) dotColor = 'var(--warning)';
+
+        return `
+        <div class="item-card" onclick="toggleDetails(${p.id})" style="cursor: pointer; margin-bottom: 12px; padding: 15px; border-radius: 25px;">
+            <div class="card-main-content" style="display: flex; align-items: center;">
+                
+                <!-- Icon (Fixed Width) -->
+                <div style="width: 40px; color: #333;">
+                    <i data-lucide="${p.icon || 'package'}" size="22"></i>
+                </div>
+
+                <!-- Product Info (Takes up remaining space) -->
+                <div style="flex: 1; margin-left: 10px;">
+    <strong style="display: block; font-size: 16px; font-weight: 800;">${p.name}</strong>
+    <!-- Ensure this says p.category -->
+    <small style="color: #a0a0a0; font-size: 12px; display: block;">${p.category || 'No Category'}</small>
+    <!-- Adding Supplier to the main view -->
+    <small style="color: #004d4d; font-size: 10px; font-weight: 700;">SUPPLIER: ${p.supplier || 'N/A'}</small>
+</div>
+
+                <!-- Control Group (Matches image_1d1f97.png layout) -->
+                <div style="display: flex; align-items: center; gap: 15px;" onclick="event.stopPropagation();">
+                    
+                    <!-- Minus Button -->
+                    <button onclick="updateQty(${p.id}, -1)" 
+                        style="border: none; background: #e0e0e0; border-radius: 8px; width: 32px; height: 32px; font-weight: 800; cursor: pointer; opacity: 0.8;">
+                        -
+                    </button>
+                    
+                    <!-- Quantity Display -->
+                    <span style="font-weight: 800; font-size: 16px; min-width: 20px; text-align: center;">${p.qty}</span>
+                    
+                    <!-- Plus Button (Only if you want it visible, otherwise hide to match image exactly) -->
+                    <button onclick="updateQty(${p.id}, 1)" 
+                        style="border: none; background: var(--primary-dark); color: white; border-radius: 8px; width: 32px; height: 32px; font-weight: 800; cursor: pointer;">
+                        +
+                    </button>
+                    
+                    <!-- Status Indicator Dot -->
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: ${dotColor}; margin: 0 5px;"></div>
+                    
+                    <!-- Delete Trash Icon -->
+                    <button onclick="deleteItem(${p.id})" style="border: none; background: none; color: #e74c3c; cursor: pointer; padding: 5px;">
+                        <i data-lucide="trash-2" size="20"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Expansion Details Section -->
+            ${isExpanded ? `
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div><label style="font-size: 10px; font-weight: 800; color: #777;">LOCATION</label><div style="font-size: 12px;">${p.location || 'Aisle 1'}</div></div>
+                    <div><label style="font-size: 10px; font-weight: 800; color: #777;">PRICE</label><div style="font-size: 12px;">₱${p.price}</div></div>
+                </div>
+            ` : ''}
+        </div>`;
+    }).join('');
+    
+    lucide.createIcons();
+}
+
+    // 3. SEARCH & FILTERS
+    window.filterProducts = function() {
+        const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+        const filtered = products.filter(p => 
+            p.name.toLowerCase().includes(searchTerm) || 
+            p.category.toLowerCase().includes(searchTerm)
+        );
+        renderDashboard(filtered);
+    };
+
+    window.filterHistory = function() {
+        const searchTerm = document.getElementById('historySearch').value.toLowerCase();
+        const filtered = history.filter(log => 
+            log.name.toLowerCase().includes(searchTerm)
+        );
+        renderHistory(filtered);
+    };
+
+    // 4. STOCK & PRODUCT MANAGEMENT
+    window.updateStock = function(id, change) {
+        const product = products.find(p => p.id === id);
+        if (product) {
+            product.qty = Math.max(0, product.qty + change);
+            history.unshift({
+                name: product.name,
+                type: change > 0 ? 'in' : 'out',
+                qty: Math.abs(change),
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+            filterProducts(); 
+        }
+    };
+
+    window.deleteProduct = function(id) {
+        if (confirm("Delete this product?")) {
+            products = products.filter(p => p.id !== id);
+            filterProducts();
+        }
+    };
+
+    window.saveProduct = function() {
+    const nameVal = document.getElementById('prod-name').value;
+    const catVal = document.getElementById('prod-cat').value;
+    const qtyVal = document.getElementById('prod-qty').value;
+    const priceVal = document.getElementById('prod-price').value;
+    const supplierVal = document.getElementById('prod-supplier').value; // Get the supplier!
+
+    if(nameVal && catVal !== "Select Category...") {
+        products.push({
+            id: Date.now(),
+            name: nameVal,
+            category: catVal, // This must match the name in renderDashboard
+            qty: parseInt(qtyVal) || 0,
+            price: parseFloat(priceVal) || 0,
+            supplier: supplierVal || "General Supplier", // Save the supplier
+            icon: "package"
+        });
+        
+        // Clear inputs and return home
+        showView('home'); 
+    } else {
+        alert("Please fill in Name and Category");
+    }
+};
+
+    // 5. REPORTS & HISTORY RENDERING
+    function renderHistory(data = history) {
+        const container = document.getElementById('history-list-container');
+        if (!container) return;
+        container.innerHTML = data.map(log => `
+            <div class="movement-card">
+                <div class="indicator ${log.type}"><i data-lucide="${log.type === 'in' ? 'arrow-down-left' : 'arrow-up-right'}"></i></div>
+                <div class="info"><b>${log.name}</b><small>${log.type === 'in' ? 'Restock' : 'Sold'} • ${log.time}</small></div>
+                <div class="qty-change" style="color: var(--${log.type === 'in' ? 'in-green' : 'out-red'})">
+                    ${log.type === 'in' ? '+' : '-'}${log.qty}
+                </div>
+            </div>`).join('');
+        lucide.createIcons();
+    }
+
+function renderReports() {
+    const totalItems = products.length;
+    const lowStockList = products.filter(p => p.qty < 5);
+    const totalValue = products.reduce((sum, p) => sum + ((p.price || 0) * p.qty), 0);
+
+    // 1. Update Top Stats
+    document.getElementById('report-total-items').innerText = totalItems;
+    document.getElementById('report-low-stock').innerText = lowStockList.length;
+    document.getElementById('report-total-value').innerText = `$${totalValue.toLocaleString()}`;
+
+    // 2. Update Alert Box
+    const alertBox = document.querySelector('.alert-box');
+    if (lowStockList.length > 0) {
+        alertBox.style.display = 'block';
+        alertBox.innerHTML = `<div style="font-weight: 800; margin-bottom: 5px;">Needs Restock:</div>` + 
+            lowStockList.map(p => `• ${p.name} (Qty: ${p.qty})`).join('<br>');
+    } else {
+        alertBox.style.display = 'none';
+    }
+
+    // 3. Render Category Bars Dynamically
+    const barContainer = document.getElementById('bar-chart-container');
+    const categories = [...new Set(products.map(p => p.category))];
+    
+    barContainer.innerHTML = categories.map(cat => {
+        const catTotal = products.filter(p => p.category === cat).reduce((sum, p) => sum + p.qty, 0);
+        const height = Math.min(catTotal * 5, 120); 
+        return `
+            <div class="bar" style="height: ${height}px;">
+                <span class="bar-name">${cat}</span>
+            </div>`;
+    }).join('');
+
+    // 4. Update Pie Chart Visual & Restore Legend
+    const highQtyCount = products.filter(p => p.qty > 10).length;
+    const lowQtyCount = lowStockList.length;
+    const midQtyCount = totalItems - highQtyCount - lowQtyCount;
+
+    const highPer = totalItems ? Math.round((highQtyCount / totalItems) * 100) : 0;
+    const lowPer = totalItems ? Math.round((lowQtyCount / totalItems) * 100) : 0;
+    const medPer = 100 - highPer - lowPer;
+
+    const pieVisual = document.getElementById('pie-chart-visual');
+    pieVisual.style.background = `conic-gradient(
+        var(--success) 0% ${highPer}%, 
+        var(--warning) ${highPer}% ${highPer + medPer}%, 
+        var(--danger) ${highPer + medPer}% 100%
+    )`;
+
+    // INJECT LEGEND (Fixes image_1daa7c.png)
+    const legendContainer = document.getElementById('pie-legend');
+    legendContainer.innerHTML = `
+        <div class="legend-item"><div class="dot" style="background: var(--success)"></div> Healthy (>10): ${highQtyCount}</div>
+        <div class="legend-item"><div class="dot" style="background: var(--warning)"></div> Moderate (5-10): ${midQtyCount}</div>
+        <div class="legend-item"><div class="dot" style="background: var(--danger)"></div> Low Stock (<5): ${lowQtyCount}</div>
+    `;
+}
+
+    // 6. NAVIGATION
+    window.showView = function(viewName) {
+        document.querySelectorAll('.screen-view').forEach(view => view.classList.remove('active'));
+        document.getElementById('view-' + viewName).classList.add('active');
+        
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        const activeNav = document.getElementById('nav-' + viewName);
+        if(activeNav) activeNav.classList.add('active');
+        
+        if(viewName === 'home') renderDashboard();
+        if(viewName === 'history') renderHistory();
+        if(viewName === 'reports') renderReports();
+        
+        lucide.createIcons();
+    };
+    window.toggleDetails = function(id) {
+    expandedProductId = (expandedProductId === id) ? null : id;
+    renderDashboard(); // Re-render to show/hide the details
+};
+
+    window.onload = () => {
+        lucide.createIcons();
+        renderDashboard();
+    };
+    window.updateQty = function(id, change) {
+    const product = products.find(p => p.id === id);
+    if (product) {
+        const oldQty = product.qty;
+        product.qty = Math.max(0, product.qty + change); // Prevent negative stock
+
+        // Only log if the quantity actually changed
+        if (oldQty !== product.qty) {
+            // 1. Create the history log object
+            const logEntry = {
+                name: product.name,
+                type: change > 0 ? 'in' : 'out',
+                qty: Math.abs(change),
+                time: new Date().toLocaleTimeString([], { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                })
+            };
+
+            // 2. Add to the beginning of your history array
+            history.unshift(logEntry);
+
+            // 3. Refresh the UI
+            renderDashboard();
+            
+            // If the user is currently looking at the history or reports, refresh those too
+            const historyView = document.getElementById('view-history');
+            if (historyView && historyView.classList.contains('active')) {
+                renderHistory();
+            }
+        }
+    }
+};
+
+window.deleteItem = function(id) {
+    if(confirm("Remove this item from inventory?")) {
+        // Filter the global products array
+        products = products.filter(p => p.id !== id);
+        renderDashboard();
+    }
+};
+</script>
+</body>
+</html>
